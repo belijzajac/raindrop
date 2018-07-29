@@ -7,17 +7,20 @@
 // Struct that holds weather info
 struct Data{
     std::string name;
+    std::string country;
     std::string last_updated;
     std::string condition;
     std::string wind_dir;
-    float temp_c;
-    float wind_mph;
+    std::string temp_c;
+    std::string wind_mph;
 };
 
 class FetchWeather{
 private:
     // Extracted data
     std::string json_data;
+
+    struct Data *currect_data = new Data;
 
     // Private memory struct
     struct MemoryStruct {
@@ -29,10 +32,11 @@ private:
 
 public:
     explicit FetchWeather(const std::string &url);
-    ~FetchWeather() = default;
+    ~FetchWeather();
 
     static size_t writeMemoryCallback(void *contents, size_t size, size_t nmemb, void *buffer_in);
     void showJSONdata() const;
+    void parseJSON();
 };
 
 #endif //RAINDROP_FETCHWEATHER_H
