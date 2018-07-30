@@ -1,4 +1,5 @@
 #include "FetchWeather.h"
+#include "Conditions.h"
 
 #include <curl/curl.h>
 #include <curl/easy.h>
@@ -53,7 +54,8 @@ FetchWeather::FetchWeather(const std::string &url){
 }
 
 FetchWeather::~FetchWeather() {
-    delete currect_data;
+    delete current_data;
+    delete [] forecast_data;
 }
 
 size_t FetchWeather::writeMemoryCallback(void *contents, size_t size, size_t nmemb, void *buffer_in) {
@@ -96,49 +98,153 @@ void find_distance_numbers(const std::string &str, const std::string &what, std:
     e = str.find(',', e);
 }
 
+// Determines the wind direction
+const std::string wind_dir(const std::string &str){
+    if(str == "N")
+        return "↑";
+    else if(str == "NNE" || str == "NE" || str == "ENE")
+        return "↗";
+    else if(str == "E")
+        return "→";
+    else if(str == "ESE" || str == "SE" || str == "SSE")
+        return "↘";
+    else if(str == "S")
+        return "↓";
+    else if(str == "SSW" || str == "SW" || str == "WSW")
+        return "↙";
+    else if(str == "W")
+        return "←";
+    else if(str == "WNW" || str == "NW" || str == "NNW")
+        return "↖";
+    return "?";
+}
+
 void FetchWeather::parseJSON() {
 
     // Marks beginning and ending of a substring
-    std::string::size_type begin, end;
+    std::string::size_type begin = 0, end = 0;
 
-    // Finds city's name
+    // Find city's name
     find_distance(json_data, "name", begin, end);
-    currect_data->name = json_data.substr(begin, end - begin);
-    std::cout << currect_data->name << std::endl;
+    current_data->city = json_data.substr(begin, end - begin);
 
-    // Finds country
+    // Find country
     find_distance(json_data, "country", begin, end);
-    currect_data->country = json_data.substr(begin, end - begin);
-    std::cout << currect_data->country << std::endl;
+    current_data->country = json_data.substr(begin, end - begin);
 
     // Find when was the database last time updated
     find_distance(json_data, "last_updated\"", begin, end);
-    currect_data->last_updated = json_data.substr(begin-1, end - begin+1);
-    std::cout << currect_data->last_updated << std::endl;
+    current_data->last_updated = json_data.substr(begin-1, end - begin+1);
 
     // Find temperature
     find_distance_numbers(json_data, "temp_c", begin, end);
-    currect_data->temp_c = json_data.substr(begin, end - begin);
-    currect_data->temp_c += " °C";
-    std::cout << currect_data->temp_c << std::endl;
+    current_data->temp_c = json_data.substr(begin, end - begin);
+    current_data->temp_c += " °C";
 
     // Find condition
     find_distance(json_data, "text", begin, end);
-    currect_data->condition = json_data.substr(begin, end - begin);
-    std::cout << currect_data->condition << std::endl;
+    current_data->condition = json_data.substr(begin, end - begin);
 
     // Find wind m/s and its direction
     std::string wind_ms, dir;
     // 1) wind_ms
     find_distance_numbers(json_data, "wind_kph", begin, end);
     wind_ms = json_data.substr(begin, end - begin);
-
-    /* TODO: */
-
-    //wind_ms = std::to_string( std::fixed << std::setprecision(2) << (std::atof(wind_ms.c_str()) * 1000 / 3600)) + " m/s";
-    std::cout << wind_ms << std::endl;
+    wind_ms = std::to_string(std::atof(wind_ms.c_str()) * 1000 / 3600) + " m/s";
     // 2) find wind dir
     find_distance(json_data, "wind_dir", begin, end);
     dir = json_data.substr(begin, end - begin);
-    std::cout << dir << std::endl;
+    current_data->wind = wind_dir(dir) + " " + wind_ms;
+
+    json_data = json_data.substr(end, json_data.length() - end);
+    end = begin = 0;
+
+    // Parsing forecast data (all the other days)
+    for(int day = 0; day < 6; day++){
+        // Find date
+        find_distance(json_data, "date\"", begin, end);
+        forecast_data[day].date = json_data.substr(begin-1, end - begin+1);
+
+        // Find max temperature
+        find_distance_numbers(json_data, "maxtemp_c", begin, end);
+        forecast_data[day].max_temp_c = json_data.substr(begin, end - begin);
+        forecast_data[day].max_temp_c += " °C";
+
+        // Find min temperature
+        find_distance_numbers(json_data, "mintemp_c", begin, end);
+        forecast_data[day].min_temp_c = json_data.substr(begin, end - begin);
+        forecast_data[day].min_temp_c += " °C";
+
+        // Wind
+        wind_ms.clear();
+        find_distance_numbers(json_data, "maxwind_kph", begin, end);
+        wind_ms = json_data.substr(begin, end - begin);
+        wind_ms = std::to_string(std::atof(wind_ms.c_str()) * 1000 / 3600) + " m/s";
+        forecast_data[day].wind = wind_ms;
+
+        // Find condition
+        find_distance(json_data, "text", begin, end);
+        forecast_data[day].condition = json_data.substr(begin, end - begin);
+
+        // Find prescription in mm
+        find_distance_numbers(json_data, "totalprecip_mm", begin, end);
+        forecast_data[day].precip_mm = json_data.substr(begin, end - begin) + " mm";
+
+        // Find sunrise
+        find_distance(json_data, "sunrise\"", begin, end);
+        forecast_data[day].sunrise = json_data.substr(begin-1, end - begin+1);
+
+        // Find sunset
+        find_distance(json_data, "sunset\"", begin, end);
+        forecast_data[day].sunset = json_data.substr(begin-1, end - begin+1);
+
+        json_data = json_data.substr(end, json_data.length() - end);
+        end = begin = 0;
+    }
+}
+
+// Simply displays the weather report
+void FetchWeather::displayWeather() {
+    // Current weather:
+    std::cout << "Location:     " << current_data->city << ", " << current_data->country << std::endl;
+    std::cout << "Last updated: " << current_data->last_updated << std::endl << std::endl;
+    std::cout << "Current weather:" << std::endl;
+    std::cout << Conditions::Cloudy::c[0] << std::endl;
+    std::cout << Conditions::Cloudy::c[1] << " 🌡   " << current_data->temp_c << std::endl;
+    std::cout << Conditions::Cloudy::c[2] << " 🌬 " <<  current_data->wind << std::endl;
+    std::cout << Conditions::Cloudy::c[3] << std::endl;
+    std::cout << Conditions::Cloudy::c[4] << std::endl;
+
+    // Weather report for 6 days:
+    std::vector<int> _ind = {0, 1, 2};
+    for(int i = 0; i<2; i++){
+        std::cout << "-------------------------------------------------------------------------------------------------------------------------\n";
+        std::cout << "| " << std::internal << forecast_data[_ind[0]].date << std::setw(30) << " | " << forecast_data[_ind[1]].date << std::setw(30) << " | " << forecast_data[_ind[2]].date << std::setw(30) << "|\n";
+        std::cout << "-------------------------------------------------------------------------------------------------------------------------\n";
+        std::cout << "| " << Conditions::Cloudy::c[0] << " 🌡 " << std::left << std::setw(7) <<  forecast_data[_ind[0]].min_temp_c << std::setw(3) << " → " << std::setw(11) << forecast_data[_ind[0]].max_temp_c << " | "
+                          << Conditions::Cloudy::c[0] << " 🌡 " << std::left << std::setw(7) <<  forecast_data[_ind[1]].min_temp_c << std::setw(3) << " → " << std::setw(11) << forecast_data[_ind[1]].max_temp_c << " | "
+                          << Conditions::Cloudy::c[0] << " 🌡 " << std::left << std::setw(7) <<  forecast_data[_ind[2]].min_temp_c << std::setw(3) << " → " << std::setw(11) << forecast_data[_ind[2]].max_temp_c << " |" << std::endl;
+
+        std::cout << "| " << Conditions::Cloudy::c[1] << " 🌬 " << std::left << std::setw(20) << forecast_data[_ind[0]].wind <<  " | "
+                          << Conditions::Cloudy::c[1] << " 🌬 " << std::left << std::setw(20) << forecast_data[_ind[1]].wind <<  " | "
+                          << Conditions::Cloudy::c[1] << " 🌬 " << std::left << std::setw(20) << forecast_data[_ind[2]].wind <<  " |" << std::endl;
+
+
+        std::cout << "| " << Conditions::Cloudy::c[2] << " 🌧 " << std::left << std::setw(20) << forecast_data[_ind[0]].precip_mm << " | "
+                          << Conditions::Cloudy::c[2] << " 🌧 " << std::left << std::setw(20) << forecast_data[_ind[1]].precip_mm << " | "
+                          << Conditions::Cloudy::c[2] << " 🌧 " << std::left << std::setw(20) << forecast_data[_ind[2]].precip_mm << " |" << std::endl;
+
+
+        std::cout << "| " << Conditions::Cloudy::c[3] << " ☀️  " << std::left << std::setw(20) << forecast_data[_ind[0]].sunrise << " | "
+                          << Conditions::Cloudy::c[3] << " ☀️  " << std::left << std::setw(20) << forecast_data[_ind[1]].sunrise << " | "
+                          << Conditions::Cloudy::c[3] << " ☀️  " << std::left << std::setw(20) << forecast_data[_ind[2]].sunrise << " |" << std::endl;
+
+
+        std::cout << "| " << Conditions::Cloudy::c[4] << " 🌫 " << std::left << std::setw(20) << forecast_data[_ind[0]].sunset << " | "
+                          << Conditions::Cloudy::c[4] << " 🌫 " << std::left << std::setw(20) << forecast_data[_ind[1]].sunset << " | "
+                          << Conditions::Cloudy::c[4] << " 🌫 " << std::left << std::setw(20) << forecast_data[_ind[2]].sunset << " |" << std::endl;
+
+        std::cout << "-------------------------------------------------------------------------------------------------------------------------\n\n";
+        _ind.clear(); _ind = {3, 4, 5}; // put new indexes
+    }
 }
