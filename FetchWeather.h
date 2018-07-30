@@ -3,24 +3,39 @@
 
 #include <curl/curl.h>
 #include <string>
+#include <vector>
 
-// Struct that holds weather info
-struct Data{
-    std::string name;
-    std::string country;
-    std::string last_updated;
-    std::string condition;
-    std::string wind_dir;
-    std::string temp_c;
-    std::string wind_mph;
+// Holds weather info for the current day
+struct curr_day{
+    std::string city,
+                country,
+                last_updated,
+                condition,
+                wind,
+                temp_c;
 };
+typedef struct curr_day curr_day;
+
+// Holds forecast data
+struct forecast{
+    std::string date,
+                condition,
+                wind,
+                max_temp_c,
+                min_temp_c,
+                precip_mm,
+                sunrise,
+                sunset;
+};
+typedef struct forecast forecast;
 
 class FetchWeather{
 private:
     // Extracted data
     std::string json_data;
 
-    struct Data *currect_data = new Data;
+    curr_day *current_data  = new curr_day;
+    forecast *forecast_data = new forecast[6];
 
     // Private memory struct
     struct MemoryStruct {
@@ -37,6 +52,7 @@ public:
     static size_t writeMemoryCallback(void *contents, size_t size, size_t nmemb, void *buffer_in);
     void showJSONdata() const;
     void parseJSON();
+    void displayWeather();
 };
 
 #endif //RAINDROP_FETCHWEATHER_H
