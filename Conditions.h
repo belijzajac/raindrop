@@ -122,6 +122,15 @@ namespace Conditions{
                 "\033[38;5;255m    *  *  *  \033[0m"
         };
     };
+    namespace IcePellets{
+        const std::vector<std::string> c = {
+                "\033[38;5;250m     .-.     \033[0m",
+                "\033[38;5;250m    (   ).   \033[0m",
+                "\033[38;5;250m   (___(__)  \033[0m",
+                "\033[38;5;255m    ♦  ♦  ♦  \033[0m",
+                "\033[38;5;255m   ♦  ♦  ♦   \033[0m"
+        };
+    };
     namespace PartlyCloudy{
         const std::vector<std::string> c = {
                 "\033[38;5;226m   \\  /\033[0m      ",

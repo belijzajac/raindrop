@@ -13,6 +13,7 @@ struct curr_day{
                 condition,
                 wind,
                 temp_c;
+    std::vector<std::string> ascii_art;
 };
 typedef struct curr_day curr_day;
 
@@ -26,6 +27,7 @@ struct forecast{
                 precip_mm,
                 sunrise,
                 sunset;
+    std::vector<std::string> ascii_art;
 };
 typedef struct forecast forecast;
 
@@ -35,7 +37,7 @@ private:
     std::string json_data;
 
     curr_day *current_data  = new curr_day;
-    forecast *forecast_data = new forecast[6];
+    forecast *forecast_data = new forecast[7];
 
     // Private memory struct
     struct MemoryStruct {
@@ -53,6 +55,7 @@ public:
     void showJSONdata() const;
     void parseJSON();
     void displayWeather();
+    const std::vector<std::string> get_condition(const std::string &cond);
 };
 
 #endif //RAINDROP_FETCHWEATHER_H
