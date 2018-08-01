@@ -122,6 +122,11 @@ const std::string wind_dir(const std::string &str){
     return "?";
 }
 
+const std::string fix_wind_floating_point(const std::string &str){
+    std::string::size_type point = str.find('.'); // find how much to substract
+    return str.substr(0, point + 2);              // 2 ==> '.' + 1 extra digit
+}
+
 // Parses JSON
 void FetchWeather::parseJSON() {
 
@@ -155,7 +160,8 @@ void FetchWeather::parseJSON() {
     // 1) wind_ms
     find_distance_numbers(json_data, "wind_kph", begin, end);
     wind_ms = json_data.substr(begin, end - begin);
-    wind_ms = std::to_string(std::atof(wind_ms.c_str()) * 1000 / 3600) + " m/s";
+    wind_ms = std::to_string(std::atof(wind_ms.c_str()) * 1000 / 3600);
+    wind_ms = fix_wind_floating_point(wind_ms) + " m/s";
     // 2) find wind dir
     find_distance(json_data, "wind_dir", begin, end);
     dir = json_data.substr(begin, end - begin);
@@ -184,7 +190,8 @@ void FetchWeather::parseJSON() {
         wind_ms.clear();
         find_distance_numbers(json_data, "maxwind_kph", begin, end);
         wind_ms = json_data.substr(begin, end - begin);
-        wind_ms = std::to_string(std::atof(wind_ms.c_str()) * 1000 / 3600) + " m/s";
+        wind_ms = std::to_string(std::atof(wind_ms.c_str()) * 1000 / 3600);
+        wind_ms = fix_wind_floating_point(wind_ms) + " m/s";
         forecast_data[day].wind = wind_ms;
 
         // Find condition
@@ -210,7 +217,7 @@ void FetchWeather::parseJSON() {
 }
 
 // Gets corresponding ASCII art image per provided weather condition
-const std::vector<std::string> FetchWeather::get_condition(const std::string &cond) {
+const std::vector<std::string> FetchWeather::get_condition(const std::string &cond) const{
     if(cond == "Cloudy")
         return Conditions::Cloudy::c;
     else if(cond == "Fog" || cond == "Freezing fog" || cond == "Mist")
@@ -254,7 +261,7 @@ const std::vector<std::string> FetchWeather::get_condition(const std::string &co
 }
 
 // Simply displays the weather report
-void FetchWeather::displayWeather() {
+void FetchWeather::displayWeather() const {
     // Current weather:
     std::cout << "Location:     " << current_data->city << ", " << current_data->country << std::endl;
     std::cout << "Last updated: " << current_data->last_updated << std::endl << std::endl;
@@ -265,12 +272,12 @@ void FetchWeather::displayWeather() {
     std::cout << current_data->ascii_art[3] << std::endl;
     std::cout << current_data->ascii_art[4] << std::endl;
 
-    // Weather report for 7 days:
+    // Weather report for 6 days:
     std::vector<int> _ind = {0, 1};
     for(int i = 0; i<3; i++){
         std::cout << "-------------------------------------------------------------------------------------------------------------------------\n";
-        std::cout << "| " << std::setw(30) << forecast_data[_ind[0]].date << std::setw(30) << " | " << std::setw(30) << forecast_data[_ind[1]].date << std::setw(30) << "|\n";
-        std::cout << "-------------------------------------------------------------------------------------------------------------------------\n";
+        std::cout << "|  " << "\e[1;32m" << forecast_data[_ind[0]].date << "\e[0m" << "  | " << std::setw(46) << "  |  " << "\e[1;32m" << forecast_data[_ind[1]].date << "\e[0m" << "  | " << std::setw(45) << "|\n";
+        std::cout << "|--------------|" << std::setw(60) << "|--------------|" << std::setw(46) << "|\n";
         std::cout << "| " << forecast_data[_ind[0]].ascii_art[0] << " >  " << std::left << std::setw(40) << forecast_data[_ind[0]].condition << " | "
                           << forecast_data[_ind[1]].ascii_art[0] << " >  " << std::left << std::setw(40) << forecast_data[_ind[1]].condition << " |\n";
 
@@ -285,7 +292,7 @@ void FetchWeather::displayWeather() {
 
         std::cout << "| " << forecast_data[_ind[0]].ascii_art[4] << " ☀️  " << std::left << std::setw(8) << forecast_data[_ind[0]].sunrise << " ⇒ " << std::setw(9) << forecast_data[_ind[0]].sunset << std::internal << std::setw(23) << " | "
                           << forecast_data[_ind[1]].ascii_art[4] << " ☀️  " << std::left << std::setw(8) << forecast_data[_ind[1]].sunrise << " ⇒ " << std::setw(9) << forecast_data[_ind[1]].sunset << std::internal << std::setw(23) << " |\n";
-        std::cout << "-------------------------------------------------------------------------------------------------------------------------\n\n";
         _ind[0] += 2; _ind[1] += 2; // update indexes
     }
+    std::cout << "-------------------------------------------------------------------------------------------------------------------------\n";
 }

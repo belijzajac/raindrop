@@ -1,0 +1,3 @@
+Key=4028be11da914310a1f133957182707
+City=Kaunas
+Days=6
