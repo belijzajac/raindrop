@@ -244,7 +244,7 @@ const std::vector<std::string> FetchWeather::get_condition(const std::string &co
         return Conditions::LightSnowShowers::c;
     else if(cond == "Partly cloudy")
         return Conditions::PartlyCloudy::c;
-    else if(cond == "Sunny")
+    else if(cond == "Sunny" || cond == "Clear")
         return Conditions::Sunny::c;
     else if(cond == "Moderate or heavy rain with thunder")
         return Conditions::ThunderyHeavyRain::c;
