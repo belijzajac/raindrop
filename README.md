@@ -6,9 +6,10 @@
 
 > To be written...
 
-## Screenshot
+## Screenshots
 
-![raindrop-screenshot](/assets/screenshot_1.png)
+![raindrop-screenshot-1](/assets/screenshot_1.png)
+![raindrop-screenshot-2](/assets/screenshot_2.png)
 
 ## Get WorldWeatherOnline API key
 
@@ -18,7 +19,7 @@ To get the WorldWeatherOnline API key, you must create an account at
 
 ## Configure raindrop
 
-> To be written...
+Edit <b>config.txt</b> file with your WorldWeatherOnline API key and a city of choice
 
 ## Dependencies
 
