@@ -37,7 +37,7 @@ private:
     std::string json_data;
 
     curr_day *current_data  = new curr_day;
-    forecast *forecast_data = new forecast[7];
+    forecast *forecast_data = new forecast[6];
 
     // Private memory struct
     struct MemoryStruct {
@@ -54,8 +54,9 @@ public:
     static size_t writeMemoryCallback(void *contents, size_t size, size_t nmemb, void *buffer_in);
     void showJSONdata() const;
     void parseJSON();
-    void displayWeather();
-    const std::vector<std::string> get_condition(const std::string &cond);
+    void displayWeather() const;
+    const std::vector<std::string> get_condition(const std::string &cond) const;
+    friend const std::string fix_wind_floating_point(const std::string &str);
 };
 
 #endif //RAINDROP_FETCHWEATHER_H
