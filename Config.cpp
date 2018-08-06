@@ -1,5 +1,6 @@
 #include "Config.h"
 #include "Exception.h"
+#include "Utilities.h"
 
 #include <fstream>
 #include <iostream>
@@ -15,7 +16,8 @@ void check_validity_of_data(const std::string &str, const std::string &what){
 
 void Config::init() {
     // Open the config file
-    std::ifstream config_file("config.txt");
+    std::string config_file_loc = "/home/" + Utilities::getUsername() + "/.raindrop/config.txt";
+    std::ifstream config_file(config_file_loc);
     if(!config_file.is_open())
         throw Exception_File("Cannot open file config.txt");
     else{
