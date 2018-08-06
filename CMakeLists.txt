@@ -3,5 +3,5 @@ project(raindrop)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_executable(raindrop main.cpp FetchWeather.cpp FetchWeather.h Conditions.h Config.cpp Config.h Exception.h)
+add_executable(raindrop main.cpp FetchWeather.cpp FetchWeather.h Conditions.h Config.cpp Config.h Exception.h Utilities.h)
 target_link_libraries(raindrop curl)
